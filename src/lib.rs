@@ -5,6 +5,7 @@
 * Copyright (C) 2024 mini_bomba
 */
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![doc = include_str!("../README.md")]
 
 mod context;
 mod iterator;

@@ -15,5 +15,5 @@ this crate aims to be a simpler, hopefully less annoying alternative if you do t
 
 ## deps
 - no required dependencies
-- serde optionally required for serializing the serializable error variant
-- anyhow optionally required for turning anyhow errors into serializable errors
+- serde optionally required for serializing the serializable error variant (enable the `serde` feature)
+- anyhow optionally required for turning anyhow errors into serializable errors (enable the `anyhow` feature)
