@@ -1,5 +1,6 @@
 [package]
 name = "cloneable_errors"
+description = "A library similar to anyhow, that allows the errors to be cloned, shared, cached and even sent over the network"
 version = "1.0.0"
 repository = "https://github.com/mini-bomba/cloneable_errors"
 license = "MIT"
