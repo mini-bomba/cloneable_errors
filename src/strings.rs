@@ -7,6 +7,9 @@
 
 use std::{fmt::Display, ptr, sync::Arc};
 
+#[cfg(feature = "serde")]
+use serde::{Serialize, Deserialize};
+
 
 /// A helper enum for easily cloneable strings
 ///
@@ -56,5 +59,28 @@ impl From<String> for SharedString
 {
     fn from(value: String) -> Self {
         SharedString::Arc(Arc::from(value))
+    }
+}
+
+// serde
+
+#[cfg(feature = "serde")]
+impl Serialize for SharedString {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer
+    {
+        match self {
+            SharedString::Arc(s) => serializer.serialize_str(s),
+            SharedString::Static(s) => serializer.serialize_str(s),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for SharedString {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where D: serde::Deserializer<'de>
+    {
+        Ok(Self::Arc(Arc::<str>::deserialize(deserializer)?))
     }
 }

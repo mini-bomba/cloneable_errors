@@ -87,7 +87,7 @@ impl From<anyhow::Error> for ErrorContext {
     fn from(value: anyhow::Error) -> Self {
         let flattened = crate::SerializableError::from_anyhow(&value);
         ErrorContext { 
-            context: SharedString::Arc(flattened.context),
+            context: flattened.context,
             cause: flattened.cause.map(|arc| arc as Arc<(dyn Error + Send + Sync + 'static)>),
         }
     }

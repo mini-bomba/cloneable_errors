@@ -10,14 +10,14 @@ use std::{error::Error, fmt::{Display, Debug}, sync::Arc};
 #[cfg(feature="serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::IntoErrorIterator;
+use crate::{IntoErrorIterator, SharedString};
 
 
 /// An error stack with all messages flattened into strings, trivial to (de)serialize
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SerializableError {
-    pub context: Arc<str>,
+    pub context: SharedString,
     pub cause: Option<Arc<SerializableError>>,
 }
 
@@ -55,22 +55,11 @@ impl Error for SerializableError {
 }
 
 #[cfg(feature = "anyhow")]
-#[allow(clippy::missing_panics_doc)] // should never panic
 impl SerializableError {
     /// Convert an [`anyhow::Error`] into a [`SerializableError`]
     #[must_use]
+    #[allow(clippy::missing_panics_doc)] // should never panic
     pub fn from_anyhow(err: &anyhow::Error) -> Self {
-        let mut result = SerializableError {
-            context: format!("{err}").into(),
-            cause: None,
-        };
-        let mut last = &mut result;
-
-        for err in err.chain().skip(1) {
-            last.cause = Some(Arc::new(SerializableError { context: format!("{err}").into(), cause: None }));
-            last = Arc::make_mut(last.cause.as_mut().unwrap());
-        }
-
-        result
+        crate::ErrorIterator::from(&**err as &(dyn Error + 'static)).serializable_copy()
     }
 }

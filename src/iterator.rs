@@ -7,7 +7,7 @@
 
 use std::{error::Error, sync::Arc};
 
-use crate::SerializableError;
+use crate::{ErrorContext, SerializableError, SharedString};
 
 
 /// `ErrorIterator` - iterates over the chain of [`Error::source`]
@@ -28,25 +28,53 @@ impl<'a> Iterator for ErrorIterator<'a> {
     }
 }
 
+impl<'a> From<&'a (dyn Error + 'static)> for ErrorIterator<'a> {
+    fn from(value: &'a (dyn Error + 'static)) -> Self {
+        Self {next_item: Some(value)}
+    }
+}
+
+impl ErrorIterator<'_> {
+    /// Copies and flattens the error stack into a [`SerializableError`]
+    /// 
+    /// # Panics
+    /// Will panic if the iterator is empty.
+    /// Pro tip: don't use this on a used iterator.
+    /// Any unused `ErrorIterator` is guaranteed to have at least one item (the error it was
+    /// initialized with) and therefore will not panic.
+    #[must_use]
+    pub fn serializable_copy(mut self) -> SerializableError {
+        let first_error = self.next().expect("empty iterator");
+        if let Some(err) = first_error.downcast_ref::<SerializableError>() {
+            return err.clone()
+        }
+        let mut result = SerializableError {
+            context: extract_message(first_error),
+            cause: None,
+        };
+        let mut last = &mut result;
+
+        for err in self {
+            if let Some(err) = err.downcast_ref::<SerializableError>() {
+                last.cause = Some(err.clone().into());
+                break;
+            }
+            last.cause = Some(Arc::new(SerializableError { context: extract_message(err), cause: None }));
+            // should be safe: we've just set this to a new Some(Arc)
+            last = Arc::get_mut(last.cause.as_mut().unwrap()).unwrap();
+        }
+
+        result
+    }
+}
+
 pub trait IntoErrorIterator {
     /// Creates an iterator over [`Error::source`]s
     fn error_chain(&self) -> ErrorIterator<'_>;
 
     /// Copies and flattens the error stack into a [`SerializableError`]
     fn serializable_copy(&self) -> SerializableError {
-        let mut iter = self.error_chain();
-        let mut result = SerializableError {
-            context: format!("{}", iter.next().expect("first item should exist")).into(),
-            cause: None,
-        };
-        let mut last = &mut result;
-
-        for err in iter {
-            last.cause = Some(Arc::new(SerializableError { context: format!("{err}").into(), cause: None }));
-            last = Arc::get_mut(last.cause.as_mut().unwrap()).unwrap();
-        }
-
-        result
+        self.error_chain().serializable_copy()
     }
 }
 
@@ -55,5 +83,19 @@ where T: Error + 'static
 {
     fn error_chain(&self) -> ErrorIterator<'_> {
         ErrorIterator { next_item: Some(self) }
+    }
+}
+
+/// Extracts the top-level error message into a [`SharedString`] with optimizations for types defined in this crate
+fn extract_message(err: &(dyn Error + 'static)) -> SharedString {
+    if let Some(err) = err.downcast_ref::<SerializableError>() {
+        // clone the context
+        err.context.clone()
+    } else if let Some(err) = err.downcast_ref::<ErrorContext>() {
+        // clone the context
+        err.context.clone()
+    } else {
+        // not our type, format
+        format!("{err}").into()
     }
 }
