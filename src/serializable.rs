@@ -55,6 +55,7 @@ impl Error for SerializableError {
 }
 
 #[cfg(feature = "anyhow")]
+#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 impl SerializableError {
     /// Convert an [`anyhow::Error`] into a [`SerializableError`]
     #[must_use]

@@ -83,7 +83,15 @@ impl Error for ErrorContext {
 }
 
 #[cfg(feature = "anyhow")]
+#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 impl From<anyhow::Error> for ErrorContext {
+    /// <div class="warning">
+    ///
+    /// NOTE: Converting [`anyhow::Error`] into [`ErrorContext`] causes the anyhow error stack to
+    ///       be flattened into a stack of string errors! Extracting the error type-specific data
+    ///       that is not exposed in the [`Display`] impl will not be possible! 
+    ///
+    /// </div>
     fn from(value: anyhow::Error) -> Self {
         let flattened = crate::SerializableError::from_anyhow(&value);
         ErrorContext { 
@@ -120,6 +128,7 @@ where T: Error + Send + Sync + 'static
 // on anyhow::Error
 
 #[cfg(feature = "anyhow")]
+#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 /// A helper trait for converting an anyhow error stack into an [`ErrorContext`] stack
 pub trait AnyhowErrContext {
     /// Convert this anyhow error into a new [`ErrorContext`] error, annotated with the specified context message
@@ -131,6 +140,7 @@ pub trait AnyhowErrContext {
 }
 
 #[cfg(feature = "anyhow")]
+#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 impl AnyhowErrContext for anyhow::Error {
     fn context<M>(self, msg: M) -> ErrorContext
     where M: Into<SharedString> 
@@ -177,6 +187,7 @@ where E: ErrContext
 
 // on Result<>s with anyhow::Error
 #[cfg(feature = "anyhow")]
+#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 #[allow(clippy::missing_errors_doc)]
 /// A helper trait for converting anyhow results into [`ErrorContext`] results
 pub trait AnyhowResContext<T, E> {
@@ -200,6 +211,7 @@ pub trait AnyhowResContext<T, E> {
 }
 
 #[cfg(feature = "anyhow")]
+#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 impl<T, E> AnyhowResContext<T, E> for Result<T, E>
 where E: AnyhowErrContext
 {

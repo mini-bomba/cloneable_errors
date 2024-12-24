@@ -4,6 +4,7 @@
 *
 * Copyright (C) 2024 mini_bomba
 */
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod context;
 mod iterator;
