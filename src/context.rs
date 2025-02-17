@@ -38,7 +38,7 @@ impl Debug for ErrorContext {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut iter = self.error_chain();
         write!(f, "{}", iter.next().expect("first item should exist"))?;
-        
+
         let mut iter = iter.enumerate();
         if let Some((i, item)) = iter.next() {
             write!(f, "\n\nCaused by:\n    {i}: {item}")?;
@@ -49,7 +49,7 @@ impl Debug for ErrorContext {
         }
 
         Ok(())
-        
+
     }
 }
 
@@ -84,7 +84,6 @@ impl Error for ErrorContext {
 }
 
 #[cfg(feature = "anyhow")]
-#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 impl From<anyhow::Error> for ErrorContext {
     /// <div class="warning">
     ///
@@ -129,7 +128,6 @@ where T: Error + Send + Sync + 'static
 // on anyhow::Error
 
 #[cfg(feature = "anyhow")]
-#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 /// A helper trait for converting an anyhow error stack into an [`ErrorContext`] stack
 pub trait AnyhowErrContext {
     /// Convert this anyhow error into a new [`ErrorContext`] error, annotated with the specified context message
@@ -141,7 +139,6 @@ pub trait AnyhowErrContext {
 }
 
 #[cfg(feature = "anyhow")]
-#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 impl AnyhowErrContext for anyhow::Error {
     fn context<M>(self, msg: M) -> ErrorContext
     where M: Into<SharedString> 
@@ -188,7 +185,6 @@ where E: ErrContext
 
 // on Result<>s with anyhow::Error
 #[cfg(feature = "anyhow")]
-#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 #[allow(clippy::missing_errors_doc)]
 /// A helper trait for converting anyhow results into [`ErrorContext`] results
 pub trait AnyhowResContext<T, E> {
@@ -212,7 +208,6 @@ pub trait AnyhowResContext<T, E> {
 }
 
 #[cfg(feature = "anyhow")]
-#[cfg_attr(docsrs, doc(cfg(feature = "anyhow")))]
 impl<T, E> AnyhowResContext<T, E> for Result<T, E>
 where E: AnyhowErrContext
 {
