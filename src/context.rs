@@ -13,6 +13,7 @@ use crate::SharedString;
 // The ErrorContext struct
 
 #[derive(Clone)]
+#[non_exhaustive]
 /// An annotated error stack
 pub struct ErrorContext {
     pub context: SharedString,
