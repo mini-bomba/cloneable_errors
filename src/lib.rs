@@ -9,11 +9,16 @@
 #![doc = include_str!("../README.md")]
 
 mod context;
+#[cfg(feature = "extensions")]
+mod extensions;
 mod iterator;
 mod serializable;
 mod strings;
+mod util;
 
 pub use context::*;
+#[cfg(feature = "extensions")]
+pub use extensions::*;
 pub use iterator::*;
 pub use serializable::*;
 pub use strings::*;

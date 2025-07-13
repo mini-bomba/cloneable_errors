@@ -6,6 +6,10 @@ repository = "https://github.com/mini-bomba/cloneable_errors"
 license = "MIT"
 edition = "2021"
 
+[features]
+# allows the errors to contain arbitrary "extension" properties
+extensions = []
+
 [dependencies]
 anyhow = {version = "1.0.79", optional = true}
 serde = {version = "1.0.215", features = ["derive", "rc"], optional = true}

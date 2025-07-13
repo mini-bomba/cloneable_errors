@@ -1,4 +1,4 @@
-# the cloneable_errors crate
+# the `cloneable_errors` crate
 
 this is basically the core functionality of anyhow, but written from scratch, in safe rust.
 
@@ -17,3 +17,8 @@ this crate aims to be a simpler, hopefully less annoying alternative if you do t
 - no required dependencies
 - serde optionally required for serializing the serializable error variant (enable the `serde` feature)
 - anyhow optionally required for turning anyhow errors into serializable errors (enable the `anyhow` feature)
+
+## optional features
+- `serde`: derives (de)serialization traits for the `SerializableError` struct
+- `anyhow`: adds compatibility functions and traits for `anyhow` error stacks (using those will flatten the errors stacks into `SerializableError`s)
+- `extensions`: enables `ErrorContext` objects to hold arbitrary "extension" attributes (side effect: increases the size of that struct)
