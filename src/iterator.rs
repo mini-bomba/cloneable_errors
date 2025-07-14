@@ -7,6 +7,8 @@
 
 use std::{error::Error, sync::Arc};
 
+#[cfg(feature = "extensions")]
+use crate::Extension;
 use crate::{ErrorContext, SerializableError, SharedString};
 
 
@@ -85,15 +87,54 @@ impl ErrorIterator<'_> {
 
         result
     }
+
+    /// Retrieves the most recent instance of a given extension type from the error stack
+    #[cfg(feature = "extensions")]
+    #[must_use]
+    #[allow(clippy::missing_panics_doc)] // the only panic path would be a bug
+    pub fn find_extension<E: Extension>(self) -> Option<Arc<E>> {
+        for err in self {
+            use std::any::TypeId;
+            use crate::MaskExtension;
+
+            let Some(err) = err.downcast_ref::<ErrorContext>() else { continue };
+
+            if let Some(ext) = err.extensions.as_ref()
+                .and_then(|m| 
+                    m.get(&TypeId::of::<E>()).cloned()
+                )
+            {
+                return Some(Arc::downcast(ext).expect("BUG: Extension stored under the wrong TypeId!"))
+            }
+            if err.extensions.as_ref()
+                .is_some_and(|m|
+                    m.contains_key(&TypeId::of::<MaskExtension<E>>())
+                )
+            {
+                // found a mask matching the requested extension
+                return None
+            }
+        }
+        None
+    }
 }
 
 pub trait IntoErrorIterator {
     /// Creates an iterator over [`Error::source`]s
+    #[must_use]
     fn error_chain(&self) -> ErrorIterator<'_>;
 
     /// Copies and flattens the error stack into a [`SerializableError`]
+    #[must_use]
     fn serializable_copy(&self) -> SerializableError {
         self.error_chain().serializable_copy()
+    }
+
+    /// Retrieves the most recent instance of a given extension type from the error stack
+    #[cfg(feature = "extensions")]
+    #[must_use]
+    fn find_extension<E: Extension>(&self) -> Option<Arc<E>> {
+        self.error_chain().find_extension()
     }
 }
 

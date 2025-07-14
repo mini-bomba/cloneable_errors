@@ -14,10 +14,11 @@ use std::{
 use std:: {
     any::TypeId,
     collections::HashMap,
+    ops::Deref,
 };
 
 #[cfg(feature = "extensions")]
-use crate::extensions::{Extension, ExtensionMap};
+use crate::extensions::{Extension, ExtensionMap, MaskExtension};
 use crate::util::option_ptr_eq;
 use crate::IntoErrorIterator;
 use crate::SharedString;
@@ -70,8 +71,6 @@ impl ErrorContext {
     /// Only one instance of any extension can be attached to an error at a time - adding another
     /// instance of an existing extension type overwrites the previous entry.
     pub fn add_extension(&mut self, ext: Arc<dyn Extension>) {
-        use std::ops::Deref;
-
         match self.extensions {
             None => {
                 let mut extensions = HashMap::with_capacity(1);
@@ -99,21 +98,28 @@ impl ErrorContext {
     /// extension.
     #[allow(clippy::missing_panics_doc)] // the only panic path would be a bug
     pub fn remove_extension<E: Extension>(&mut self) -> Option<Arc<E>> {
-        let extensions = self.extensions.as_mut().map(Arc::make_mut)?;
-        extensions
-            .remove(&TypeId::of::<E>())
-            .map(|ext| Arc::downcast(ext).expect("BUG: Extension stored under the wrong TypeId!"))
-    }
+        let mut res = None;
 
-    /// Retrieves an extension of a given type, if it exists.
-    #[must_use]
-    #[allow(clippy::missing_panics_doc)] // the only panic path would be a bug
-    pub fn get_extension<E: Extension>(&self) -> Option<Arc<E>> {
-        self.extensions
-            .as_ref()?
-            .get(&TypeId::of::<E>())
-            .cloned()
-            .map(|ext| Arc::downcast(ext).expect("BUG: Extension stored under the wrong TypeId!"))
+        if let Some(extensions) = self.extensions.as_mut().map(Arc::make_mut) {
+            res = extensions.remove(&TypeId::of::<E>())
+                .map(|ext| Arc::downcast(ext).expect("BUG: Extension stored under the wrong TypeId!"));
+
+            // extension already masked, no need to check cause stack
+            if extensions.contains_key(&TypeId::of::<MaskExtension<E>>()) {
+                println!("c");
+                return res;
+            }
+        }
+
+        if let Some(cause) = &self.cause {
+            if let Some(cause_ext) = cause.find_extension::<E>() {
+                let extensions = Arc::make_mut(self.extensions.get_or_insert_default());
+                extensions.insert(TypeId::of::<MaskExtension<E>>(), MaskExtension::<E>::get());
+                res = res.or(Some(cause_ext));
+            }
+        }
+
+        res
     }
 }
 
