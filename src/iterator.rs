@@ -11,6 +11,9 @@ use crate::{ErrorContext, SerializableError, SharedString};
 
 
 /// `ErrorIterator` - iterates over the chain of [`Error::source`]
+///
+/// The iterator will attempt to cast away any smart pointers to make downcasting to a concrete
+/// type easier.
 pub struct ErrorIterator<'a> {
     next_item: Option<&'a (dyn Error + 'static)>,
 }
@@ -19,7 +22,23 @@ impl<'a> Iterator for ErrorIterator<'a> {
     type Item = &'a (dyn Error + 'static);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(err) = self.next_item {
+        if let Some(mut err) = self.next_item {
+            // attempt to cast away any smart pointers
+            // this won't catch every single weird case of wrapping in smart pointers (as it's
+            // impossible) but it catches the most common ones, probably
+            loop {
+                if let Some(downcasted) = err.downcast_ref::<Arc<dyn Error>>() {
+                    err = &**downcasted;
+                    continue;
+                }
+                if let Some(downcasted) = err.downcast_ref::<Arc<dyn Error + Send + Sync>>() {
+                    err = &**downcasted;
+                    continue;
+                }
+                break;
+            }
+
+
             self.next_item = err.source();
             Some(err)
         } else {
