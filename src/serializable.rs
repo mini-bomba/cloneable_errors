@@ -2,7 +2,7 @@
 * This file is part of the cloneable_errors library, licensed under the MIT license: 
 * https://github.com/mini-bomba/cloneable_errors
 *
-* Copyright (C) 2024 mini_bomba
+* Copyright (C) 2024-2025 mini_bomba
 */
 
 use std::{error::Error, fmt::{Display, Debug}, sync::Arc};
@@ -10,12 +10,16 @@ use std::{error::Error, fmt::{Display, Debug}, sync::Arc};
 #[cfg(feature="serde")]
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature="bincode")]
+use bincode::{Decode, Encode};
+
 use crate::{IntoErrorIterator, SharedString};
 
 
 /// An error stack with all messages flattened into strings, trivial to (de)serialize
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "bincode", derive(Encode, Decode))]
 pub struct SerializableError {
     pub context: SharedString,
     pub cause: Option<Arc<SerializableError>>,

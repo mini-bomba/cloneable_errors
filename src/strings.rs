@@ -2,13 +2,10 @@
 * This file is part of the cloneable_errors library, licensed under the MIT license: 
 * https://github.com/mini-bomba/cloneable_errors
 *
-* Copyright (C) 2024 mini_bomba
+* Copyright (C) 2024-2025 mini_bomba
 */
 
 use std::{fmt::Display, ptr, sync::Arc};
-
-#[cfg(feature = "serde")]
-use serde::{Serialize, Deserialize};
 
 
 /// A helper enum for easily cloneable strings
@@ -65,22 +62,51 @@ impl From<String> for SharedString
 // serde
 
 #[cfg(feature = "serde")]
-impl Serialize for SharedString {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where S: serde::Serializer
-    {
-        match self {
-            SharedString::Arc(s) => serializer.serialize_str(s),
-            SharedString::Static(s) => serializer.serialize_str(s),
+mod serde_impl {
+    use serde::{Serialize, Deserialize};
+    use super::{SharedString, Arc};
+
+    impl Serialize for SharedString {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: serde::Serializer
+        {
+            match self {
+                SharedString::Arc(s) => serializer.serialize_str(s),
+                SharedString::Static(s) => serializer.serialize_str(s),
+            }
+        }
+    }
+
+    impl<'de> Deserialize<'de> for SharedString {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::Deserializer<'de>
+        {
+            Ok(Self::Arc(Arc::<str>::deserialize(deserializer)?))
         }
     }
 }
 
-#[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for SharedString {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: serde::Deserializer<'de>
-    {
-        Ok(Self::Arc(Arc::<str>::deserialize(deserializer)?))
+// bincode
+
+#[cfg(feature = "bincode")]
+mod bincode_impl {
+    use bincode::{Encode, Decode, impl_borrow_decode};
+    use super::SharedString;
+
+    impl Encode for SharedString {
+        fn encode<E: bincode::enc::Encoder>(&self, encoder: &mut E) -> Result<(), bincode::error::EncodeError> {
+            match self {
+                SharedString::Arc(s) => s.encode(encoder),
+                SharedString::Static(s) => s.encode(encoder),
+            }
+        }
     }
+
+    impl<Context> Decode<Context> for SharedString {
+        fn decode<D: bincode::de::Decoder<Context = Context>>(decoder: &mut D) -> Result<Self, bincode::error::DecodeError> {
+            Ok(SharedString::Arc(Decode::decode(decoder)?))
+        }
+    }
+
+    impl_borrow_decode!(SharedString);
 }

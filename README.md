@@ -20,5 +20,6 @@ this crate aims to be a simpler, hopefully less annoying alternative if you do t
 
 ## optional features
 - `serde`: derives (de)serialization traits for the `SerializableError` struct
+- `bincode`: derives `Encode` and `Decode` traits for the `SerializableError` struct
 - `anyhow`: adds compatibility functions and traits for `anyhow` error stacks (using those will flatten the errors stacks into `SerializableError`s)
 - `extensions`: enables `ErrorContext` objects to hold arbitrary "extension" attributes (side effect: increases the size of that struct)
