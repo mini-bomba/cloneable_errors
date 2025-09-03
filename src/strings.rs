@@ -33,10 +33,7 @@ impl Eq for SharedString {}
 
 impl Display for SharedString {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SharedString::Arc(s) => write!(f, "{s}"),
-            SharedString::Static(s) => write!(f, "{s}"),
-        }
+        write!(f, "{}", self.as_str())
     }
 }
 
@@ -59,6 +56,16 @@ impl From<String> for SharedString
     }
 }
 
+impl SharedString {
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Arc(s) => s,
+            Self::Static(s) => s,
+        }
+    }
+}
+
 // serde
 
 #[cfg(feature = "serde")]
@@ -70,10 +77,7 @@ mod serde_impl {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: serde::Serializer
         {
-            match self {
-                SharedString::Arc(s) => serializer.serialize_str(s),
-                SharedString::Static(s) => serializer.serialize_str(s),
-            }
+            serializer.serialize_str(self.as_str())
         }
     }
 
@@ -95,10 +99,7 @@ mod bincode_impl {
 
     impl Encode for SharedString {
         fn encode<E: bincode::enc::Encoder>(&self, encoder: &mut E) -> Result<(), bincode::error::EncodeError> {
-            match self {
-                SharedString::Arc(s) => s.encode(encoder),
-                SharedString::Static(s) => s.encode(encoder),
-            }
+            self.as_str().encode(encoder)
         }
     }
 
