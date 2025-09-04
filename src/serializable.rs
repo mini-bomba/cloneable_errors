@@ -58,6 +58,18 @@ impl Error for SerializableError {
     }
 }
 
+/// Unlike [`crate::ErrorContext`] and [`SharedString`], [`SerializableError`]s are compared by
+/// comparing each string value in the chain.
+/// Therefore, two instances of [`SerializableError`] deserialized from the same data will be equal
+/// to each other.
+impl PartialEq for SerializableError {
+    fn eq(&self, other: &Self) -> bool {
+        self.context.as_str() == other.context.as_str() && self.cause == other.cause
+    }
+}
+
+impl Eq for SerializableError {}
+
 #[cfg(feature = "anyhow")]
 impl SerializableError {
     /// Convert an [`anyhow::Error`] into a [`SerializableError`]
