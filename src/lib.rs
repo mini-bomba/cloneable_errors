@@ -122,6 +122,6 @@ macro_rules! anyhow {
 /// Create a new [`ErrorContext`] stack using [`anyhow!`] and immediately return it as [`Result::Err`]
 macro_rules! bail {
     ($($tok:tt)+) => {
-        return Err($crate::anyhow!($($tok)+));
+        return Err($crate::anyhow!($($tok)+))
     };
 }
