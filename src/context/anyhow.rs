@@ -19,11 +19,11 @@ impl From<anyhow::Error> for ErrorContext {
     /// </div>
     fn from(value: anyhow::Error) -> Self {
         let flattened = crate::SerializableError::from_anyhow(&value);
-        ErrorContext {
+        Self {
             context: flattened.context,
             cause: flattened
                 .cause
-                .map(|arc| arc as Arc<(dyn std::error::Error + Send + Sync + 'static)>),
+                .map(|arc| arc as Arc<dyn std::error::Error + Send + Sync + 'static>),
             #[cfg(feature = "extensions")]
             extensions: None,
         }

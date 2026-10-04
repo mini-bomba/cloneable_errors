@@ -39,11 +39,11 @@ impl ErrorContext {
     /// The error message should either be a `&'static str`, or an `Arc<str>`.
     /// `String` is also accepted, but will be converted to an `Arc<str>`.
     #[must_use]
-    pub fn new<T>(msg: T) -> ErrorContext
+    pub fn new<T>(msg: T) -> Self
     where
         T: Into<SharedString>,
     {
-        ErrorContext {
+        Self {
             context: msg.into(),
             cause: None,
             #[cfg(feature = "extensions")]
@@ -169,10 +169,6 @@ impl Eq for ErrorContext {}
 
 impl Error for ErrorContext {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        if let Some(cause) = self.cause.as_deref() {
-            Some(cause)
-        } else {
-            None
-        }
+        self.cause.as_deref().map(|cause| cause as &(dyn Error + 'static))
     }
 }

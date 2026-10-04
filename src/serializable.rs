@@ -22,7 +22,7 @@ use crate::{IntoErrorIterator, SharedString};
 #[cfg_attr(feature = "bincode", derive(Encode, Decode))]
 pub struct SerializableError {
     pub context: SharedString,
-    pub cause: Option<Arc<SerializableError>>,
+    pub cause: Option<Arc<Self>>,
 }
 
 impl Display for SerializableError {

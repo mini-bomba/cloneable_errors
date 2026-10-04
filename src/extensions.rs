@@ -16,7 +16,7 @@ use std::{
 /// that are intended to be used as error extensions.
 pub trait Extension: 'static + Send + Sync + Any {}
 
-pub(crate) type ExtensionMap = Arc<HashMap<TypeId, Arc<dyn Extension>>>;
+pub type ExtensionMap = Arc<HashMap<TypeId, Arc<dyn Extension>>>;
 
 static MASK_CACHE: LazyLock<Mutex<HashMap<TypeId, Arc<dyn Extension>>>> =
     LazyLock::new(Mutex::default);
@@ -25,7 +25,7 @@ static MASK_CACHE: LazyLock<Mutex<HashMap<TypeId, Arc<dyn Extension>>>> =
 /// type that may exist deeper along the cause chain
 /// from being seen in higher-level errors.
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct MaskExtension<T: Extension + ?Sized> {
+pub struct MaskExtension<T: Extension + ?Sized> {
     _phantom: PhantomData<T>,
 }
 impl<T: Extension + ?Sized> Extension for MaskExtension<T> {}
@@ -37,7 +37,7 @@ impl<T: Extension + ?Sized> MaskExtension<T> {
             .expect("Internal lock got poisoned")
             .entry(TypeId::of::<T>())
             .or_insert_with(|| {
-                Arc::new(MaskExtension {
+                Arc::new(Self {
                     _phantom: PhantomData::<T>,
                 })
             })

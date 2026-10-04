@@ -39,20 +39,20 @@ impl Display for SharedString {
 
 impl From<&'static str> for SharedString {
     fn from(value: &'static str) -> Self {
-        SharedString::Static(value)
+        Self::Static(value)
     }
 }
 
 impl From<Arc<str>> for SharedString {
     fn from(value: Arc<str>) -> Self {
-        SharedString::Arc(value)
+        Self::Arc(value)
     }
 }
 
 impl From<String> for SharedString
 {
     fn from(value: String) -> Self {
-        SharedString::Arc(Arc::from(value))
+        Self::Arc(Arc::from(value))
     }
 }
 
@@ -105,7 +105,7 @@ mod bincode_impl {
 
     impl<Context> Decode<Context> for SharedString {
         fn decode<D: bincode::de::Decoder<Context = Context>>(decoder: &mut D) -> Result<Self, bincode::error::DecodeError> {
-            Ok(SharedString::Arc(Decode::decode(decoder)?))
+            Ok(Self::Arc(Decode::decode(decoder)?))
         }
     }
 

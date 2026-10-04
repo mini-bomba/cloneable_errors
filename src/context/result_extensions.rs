@@ -25,15 +25,15 @@ pub trait ResExtensions<T> {
 }
 
 impl<T> ResExtensions<T> for Result<T, ErrorContext> {
-    fn extend(self, ext: Arc<dyn Extension>) -> Result<T, ErrorContext> {
+    fn extend(self, ext: Arc<dyn Extension>) -> Self {
         self.map_err(|err| err.with_extension(ext))
     }
 
-    fn with_extension(self, ext: impl FnOnce() -> Arc<dyn Extension>) -> Result<T, ErrorContext> {
+    fn with_extension(self, ext: impl FnOnce() -> Arc<dyn Extension>) -> Self {
         self.map_err(|err| err.with_extension(ext()))
     }
 
-    fn without_extension<E: Extension>(self) -> Result<T, ErrorContext> {
+    fn without_extension<E: Extension>(self) -> Self {
         self.map_err(ErrorContext::without_extension::<E>)
     }
 }
